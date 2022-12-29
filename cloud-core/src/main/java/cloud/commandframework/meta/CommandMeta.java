@@ -27,8 +27,10 @@ import cloud.commandframework.Command;
 import cloud.commandframework.keys.CloudKey;
 import io.leangen.geantyref.GenericTypeReflector;
 import io.leangen.geantyref.TypeToken;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import org.apiguardian.api.API;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -48,10 +50,26 @@ public abstract class CommandMeta {
     private static final Key<String> LEGACY_HIDDEN = Key.of(String.class, "hidden");
     public static final Key<String> DESCRIPTION = Key.of(String.class, "description");
     public static final Key<String> LONG_DESCRIPTION = Key.of(String.class, "long-description");
+
+    /**
+     * Deprecated, see {@link #HIDDEN_FROM}
+     */
+    @Deprecated
+    @API(status = API.Status.DEPRECATED, since = "1.9.0")
     public static final Key<Boolean> HIDDEN = Key.of(
             Boolean.class,
             "cloud:hidden",
             meta -> Boolean.valueOf(meta.getOrDefault(LEGACY_HIDDEN, "false"))
+    );
+
+    /**
+     * A set of locations where this command should not be displayed to the user.
+     * @since 1.9.0
+     */
+    public static final Key<Set<Location>> HIDDEN_FROM = Key.of(
+            new TypeToken<Set<Location>>() {},
+            "cloud:hidden_from",
+            meta -> Collections.emptySet()
     );
 
     /**
@@ -250,5 +268,21 @@ public abstract class CommandMeta {
          * @return the fallback derivation
          */
         @Nullable Function<@NonNull CommandMeta, @Nullable V> getFallbackDerivation();
+    }
+
+    /**
+     * A place that a command can be displayed or hidden.
+     *
+     * @since 1.8.0
+     */
+    public enum Location {
+        /**
+         * Suggestions while typing the command
+         */
+        SUGGESTIONS,
+        /**
+         * In help menus
+         */
+        HELP
     }
 }

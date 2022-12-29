@@ -23,6 +23,7 @@
 //
 package cloud.commandframework;
 
+import cloud.commandframework.arguments.StaticArgument;
 import cloud.commandframework.arguments.compound.ArgumentTriplet;
 import cloud.commandframework.arguments.parser.ArgumentParseResult;
 import cloud.commandframework.arguments.standard.BooleanArgument;
@@ -31,6 +32,7 @@ import cloud.commandframework.arguments.standard.IntegerArgument;
 import cloud.commandframework.arguments.standard.StringArgument;
 import cloud.commandframework.arguments.standard.StringArrayArgument;
 import cloud.commandframework.execution.FilteringCommandSuggestionProcessor;
+import cloud.commandframework.meta.CommandMeta;
 import cloud.commandframework.types.tuples.Pair;
 import cloud.commandframework.types.tuples.Triplet;
 import java.util.Arrays;
@@ -142,6 +144,11 @@ public class CommandSuggestionsTest {
                 }))
                 .argument(EnumArgument.of(TestEnum.class, "enum"))
                 .literal("world"));
+        manager.command(manager.commandBuilder("hidden_literal")
+                .argument(StaticArgument.hidden("hidden", CommandMeta.Location.SUGGESTIONS)));
+        manager.command(manager.commandBuilder("hidden_literal").literal("one"));
+        manager.command(manager.commandBuilder("hidden_literal").literal("two"));
+        manager.command(manager.commandBuilder("hidden_literal").literal("three"));
     }
 
     @Test
@@ -614,6 +621,12 @@ public class CommandSuggestionsTest {
 
     private List<String> suggest(CommandManager<TestCommandSender> manager, String command) {
         return manager.suggest(new TestCommandSender(), command);
+    }
+
+    @Test
+    public void testHiddenLiteral() {
+        final List<String> suggestions = suggest(manager, "hidden_literal ");
+        assertThat(suggestions).containsExactly("one", "two", "three");
     }
 
     public enum TestEnum {

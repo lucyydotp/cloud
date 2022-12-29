@@ -27,9 +27,11 @@ import cloud.commandframework.arguments.parser.ArgumentParseResult;
 import cloud.commandframework.arguments.parser.ArgumentParser;
 import cloud.commandframework.context.CommandContext;
 import cloud.commandframework.exceptions.parsing.NoInputProvidedException;
+import cloud.commandframework.meta.CommandMeta;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Queue;
@@ -46,8 +48,14 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 @API(status = API.Status.STABLE)
 public final class StaticArgument<C> extends CommandArgument<C, String> {
 
-    private StaticArgument(final boolean required, final @NonNull String name, final @NonNull String... aliases) {
+    private final Set<CommandMeta.Location> hiddenLocations;
+
+    private StaticArgument(
+            final boolean required, final @NonNull String name,
+            final @NonNull Set<CommandMeta.Location> hiddenLocations, final @NonNull String... aliases
+    ) {
         super(required, name, new StaticArgumentParser<>(name, aliases), String.class);
+        this.hiddenLocations = hiddenLocations;
     }
 
     /**
@@ -62,7 +70,45 @@ public final class StaticArgument<C> extends CommandArgument<C, String> {
             final @NonNull String name,
             final @NonNull String... aliases
     ) {
-        return new StaticArgument<>(true, name, aliases);
+        return new StaticArgument<>(true, name, Collections.emptySet(), aliases);
+    }
+
+    /**
+     * Create a new static argument instance for a required command argument, that is hidden from certain views.
+     *
+     * @param name            Argument name
+     * @param hiddenLocations Locations the argument is hidden from
+     * @param <C>             Command sender time
+     * @return Constructed argument
+     */
+    public static <C> @NonNull StaticArgument<C> hidden(
+            final @NonNull String name,
+            final CommandMeta.@NonNull Location... hiddenLocations
+    ) {
+        if (hiddenLocations.length == 0) {
+            throw new IllegalArgumentException("At least one location must be specified");
+        }
+        return new StaticArgument<>(true, name, EnumSet.of(hiddenLocations[0], hiddenLocations));
+    }
+
+    /**
+     * Create a new static argument instance for a required command argument, that is hidden from certain views.
+     *
+     * @param name            Argument name
+     * @param aliases         Argument aliases
+     * @param hiddenLocations Locations the argument is hidden from
+     * @param <C>             Command sender time
+     * @return Constructed argument
+     */
+    public static <C> @NonNull StaticArgument<C> hidden(
+            final @NonNull String name,
+            final @NonNull String[] aliases,
+            final CommandMeta.@NonNull Location... hiddenLocations
+    ) {
+        if (hiddenLocations.length == 0) {
+            throw new IllegalArgumentException("At least one location must be specified");
+        }
+        return new StaticArgument<>(true, name, EnumSet.of(hiddenLocations[0], hiddenLocations), aliases);
     }
 
     /**
@@ -90,6 +136,15 @@ public final class StaticArgument<C> extends CommandArgument<C, String> {
      */
     public @NonNull List<@NonNull String> getAlternativeAliases() {
         return Collections.unmodifiableList(new ArrayList<>(((StaticArgumentParser<C>) this.getParser()).alternativeAliases));
+    }
+
+    /**
+     * Get an immutable view of the locations this command is hidden from
+     *
+     * @return Immutable view of the locations this command is hidden from
+     */
+    public @NonNull Set<CommandMeta.@NonNull Location> getHiddenLocations() {
+        return Collections.unmodifiableSet(this.hiddenLocations);
     }
 
 

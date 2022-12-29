@@ -41,6 +41,7 @@ import io.leangen.geantyref.TypeToken;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -435,9 +436,24 @@ public class Command<C> {
      * Check whether the command is hidden
      *
      * @return {@code true} if the command is hidden, {@code false} if not
+     * @deprecated superseded by {@link #isHiddenFrom(CommandMeta.Location)}
      */
+    @Deprecated
+    @API(status = API.Status.DEPRECATED, since = "1.8.0")
     public boolean isHidden() {
         return this.getCommandMeta().getOrDefault(CommandMeta.HIDDEN, false);
+    }
+
+    /**
+     * Check whether the command is hidden from a location.
+     *
+     * @param location the location to check
+     * @return {@code true} if the command is hidden from the location, {@code false} if not
+     */
+    public boolean isHiddenFrom(final CommandMeta.Location location) {
+        return this.getCommandMeta().get(CommandMeta.HIDDEN_FROM)
+                .map(locations -> locations.contains(location))
+                .orElse(false);
     }
 
 
@@ -1189,12 +1205,26 @@ public class Command<C> {
 
         /**
          * Indicate that the command should be hidden from help menus
-         * and other places where commands are exposed to users
+         * and other places where commands are exposed to users, as defined
+         * in {@link CommandMeta.Location}.
          *
          * @return New builder instance that indicates that the constructed command should be hidden
          */
         public @NonNull Builder<C> hidden() {
-            return this.meta(CommandMeta.HIDDEN, true);
+            return this.meta(CommandMeta.HIDDEN_FROM, EnumSet.allOf(CommandMeta.Location.class));
+        }
+
+        /**
+         * Indicate that the command should be hidden from the specified locations.
+         *
+         * @param locations the locations to hide this command from. Overwrites any previously given value.
+         * @return New builder instance that indicates that the constructed command should be hidden
+         */
+        public @NonNull Builder<C> hidden(final CommandMeta.Location... locations) {
+            if (locations.length == 0) {
+                throw new IllegalArgumentException("At least one location is required");
+            }
+            return this.meta(CommandMeta.HIDDEN_FROM, EnumSet.of(locations[0], locations));
         }
 
         /**

@@ -38,6 +38,7 @@ import cloud.commandframework.exceptions.NoPermissionException;
 import cloud.commandframework.exceptions.NoSuchCommandException;
 import cloud.commandframework.keys.CloudKey;
 import cloud.commandframework.keys.SimpleCloudKey;
+import cloud.commandframework.meta.CommandMeta;
 import cloud.commandframework.permission.CommandPermission;
 import cloud.commandframework.permission.OrPermission;
 import cloud.commandframework.types.tuples.Pair;
@@ -550,7 +551,8 @@ public final class CommandTree<C> {
         if (commandQueue.size() <= 1) {
             final String literalValue = this.stringOrEmpty(commandQueue.peek());
             for (final Node<CommandArgument<C, ?>> argument : staticArguments) {
-                if (this.isPermitted(commandContext.getSender(), argument) != null) {
+                if (this.isPermitted(commandContext.getSender(), argument) != null
+                        || ((StaticArgument<?>) argument.value).getHiddenLocations().contains(CommandMeta.Location.SUGGESTIONS)) {
                     continue;
                 }
                 commandContext.setCurrentArgument(argument.getValue());
